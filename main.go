@@ -19,5 +19,5 @@ func main() {
 	s.HandleFunc("/updateProfile", updateProfile).Methods("PUT")
 	s.HandleFunc("/deleteProfile/{id}", deleteProfile).Methods("DELETE")
 
-	log.Fatal(http.ListenAndServe(":8000", s))
+	log.Fatal(http.ListenAndServe(":8000", s)) // Run Server
 }

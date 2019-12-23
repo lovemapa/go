@@ -13,22 +13,23 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+// struct for storing data
 type user struct {
 	Name string `json:name`
 	Age  int    `json:age`
 	City string `json:city`
 }
 
-var userCollection = db().Database("goTest").Collection("trainers")
+var userCollection = db().Database("goTest").Collection("users") // get collection "trainers" from db() which returns *mongo.Client
 
 // Create Profile or Signup
 
 func createProfile(w http.ResponseWriter, r *http.Request) {
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Content-Type", "application/json") // for adding Content-type
 
 	var person user
-	err := json.NewDecoder(r.Body).Decode(&person)
+	err := json.NewDecoder(r.Body).Decode(&person) // storing in person variable of type user
 	if err != nil {
 		fmt.Print(err)
 	}
@@ -38,7 +39,7 @@ func createProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fmt.Println("Inserted a single document: ", insertResult)
-	json.NewEncoder(w).Encode(insertResult.InsertedID)
+	json.NewEncoder(w).Encode(insertResult.InsertedID) // return the mongodb ID of generated document
 
 }
 
@@ -54,14 +55,14 @@ func getUserProfile(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Print(e)
 	}
-	var result primitive.M
+	var result primitive.M //  an unordered representation of a BSON document which is a Map
 	err := userCollection.FindOne(context.TODO(), bson.D{{"name", body.Name}}).Decode(&result)
 	if err != nil {
 
 		fmt.Println(err)
 
 	}
-	json.NewEncoder(w).Encode(result)
+	json.NewEncoder(w).Encode(result) // returns a Map containing document
 
 }
 
@@ -72,8 +73,8 @@ func updateProfile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	type updateBody struct {
-		Name string `json:"name"`
-		City string `json:"city"`
+		Name string `json:"name"` //value that has to be matched
+		City string `json:"city"` // value that has to be modified
 	}
 	var body updateBody
 	e := json.NewDecoder(r.Body).Decode(&body)
@@ -81,8 +82,8 @@ func updateProfile(w http.ResponseWriter, r *http.Request) {
 
 		fmt.Print(e)
 	}
-	filter := bson.D{{"name", body.Name}}
-	after := options.After
+	filter := bson.D{{"name", body.Name}} // converting value to BSON type
+	after := options.After                // for returning updated document
 	returnOpt := options.FindOneAndUpdateOptions{
 
 		ReturnDocument: &after,
@@ -101,32 +102,32 @@ func updateProfile(w http.ResponseWriter, r *http.Request) {
 func deleteProfile(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
-	params := mux.Vars(r)["id"]
+	params := mux.Vars(r)["id"] //get Parameter value as string
 
-	_id, err := primitive.ObjectIDFromHex(params)
+	_id, err := primitive.ObjectIDFromHex(params) // convert params to mongodb Hex ID
 	if err != nil {
 		fmt.Printf(err.Error())
 	}
-	opts := options.Delete().SetCollation(&options.Collation{})
+	opts := options.Delete().SetCollation(&options.Collation{}) // to specify language-specific rules for string comparison, such as rules for lettercase
 	res, err := userCollection.DeleteOne(context.TODO(), bson.D{{"_id", _id}}, opts)
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Printf("deleted %v documents\n", res.DeletedCount)
-	json.NewEncoder(w).Encode(res.DeletedCount)
+	json.NewEncoder(w).Encode(res.DeletedCount) // return number of documents deleted
 
 }
 
 func getAllUsers(w http.ResponseWriter, r *http.Request) {
 
-	var results []primitive.M
-	cur, err := userCollection.Find(context.TODO(), bson.D{{}})
+	var results []primitive.M                                   //slice for multiple documents
+	cur, err := userCollection.Find(context.TODO(), bson.D{{}}) //returns a *mongo.Cursor
 	if err != nil {
 
 		fmt.Println(err)
 
 	}
-	for cur.Next(context.TODO()) {
+	for cur.Next(context.TODO()) { //Next() gets the next document for corresponding cursor
 
 		var elem primitive.M
 		err := cur.Decode(&elem)
@@ -134,8 +135,8 @@ func getAllUsers(w http.ResponseWriter, r *http.Request) {
 			log.Fatal(err)
 		}
 
-		results = append(results, elem)
+		results = append(results, elem) // appending document pointed by Next()
 	}
-	cur.Close(context.TODO())
+	cur.Close(context.TODO()) // close the cursor once stream of documents has exhausted
 	json.NewEncoder(w).Encode(results)
 }
