@@ -20,7 +20,7 @@ type user struct {
 	City string `json:city`
 }
 
-var userCollection = db().Database("goTest").Collection("users") // get collection "trainers" from db() which returns *mongo.Client
+var userCollection = db().Database("goTest").Collection("users") // get collection "users" from db() which returns *mongo.Client
 
 // Create Profile or Signup
 
@@ -119,7 +119,7 @@ func deleteProfile(w http.ResponseWriter, r *http.Request) {
 }
 
 func getAllUsers(w http.ResponseWriter, r *http.Request) {
-
+	w.Header().Set("Content-Type", "application/json")
 	var results []primitive.M                                   //slice for multiple documents
 	cur, err := userCollection.Find(context.TODO(), bson.D{{}}) //returns a *mongo.Cursor
 	if err != nil {
